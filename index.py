@@ -1,11 +1,23 @@
-from vibora import Vibora, Response
+import os
 
-app = Vibora()
+import falcon
+import jinja2
 
 
-@app.route('/')
-async def home():
-    return Response(b'{"hello": "world"}', headers={'content-type': 'application/json'})
+def load_template(name):
+    path = os.path.join('templates', name)
+    with open(os.path.abspath(path), 'r') as fp:
+        return jinja2.Template(fp.read())
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=3000)
+
+class ThingsResource(object):
+    def on_get(self, req, resp):
+        template = load_template('awesome.j2')
+
+        resp.status = falcon.HTTP_200
+        resp.content_type = 'text/html'
+        resp.body = template.render(something='testing')
+
+app = falcon.API()
+things = ThingsResource()
+app.add_route('/things', things)
